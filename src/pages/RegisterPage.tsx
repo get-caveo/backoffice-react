@@ -37,7 +37,7 @@ export function RegisterPage() {
         description: 'Your account has been created successfully.',
       });
       navigate('/dashboard');
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: error || 'Registration failed. Please try again.',

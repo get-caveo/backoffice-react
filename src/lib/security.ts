@@ -109,7 +109,7 @@ export function clearTokens(): void {
 }
 
 // Decode JWT token (without verification - for client-side use only)
-export function decodeJWT(token: string): any {
+export function decodeJWT(token: string): { exp?: number; [key: string]: unknown } | null {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -119,7 +119,7 @@ export function decodeJWT(token: string): any {
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload);
+    return JSON.parse(jsonPayload) as { exp?: number; [key: string]: unknown };
   } catch (error) {
     console.error('Error decoding JWT:', error);
     return null;

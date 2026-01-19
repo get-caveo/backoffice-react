@@ -179,7 +179,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ access
     const newAccessToken = generateMockJWT(user, 3600);
     
     return { accessToken: newAccessToken };
-  } catch (error) {
+  } catch {
     throw new Error('Invalid refresh token');
   }
 }
@@ -224,7 +224,7 @@ export async function getCurrentUser(accessToken: string): Promise<User> {
       email: user.email,
       name: user.name,
     };
-  } catch (error) {
+  } catch {
     throw new Error('Invalid token');
   }
 }

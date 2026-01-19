@@ -26,7 +26,7 @@ export function LoginPage() {
         description: 'You have been logged in successfully.',
       });
       navigate('/dashboard');
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: error || 'Login failed. Please try again.',

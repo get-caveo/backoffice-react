@@ -167,7 +167,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const response = await authService.refreshAccessToken(tokens.refreshToken);
           tokens.accessToken = response.accessToken;
           storeTokensSecurely(tokens.accessToken, tokens.refreshToken);
-        } catch (error) {
+        } catch {
           // If refresh fails, clear tokens
           clearTokens();
           set({ isLoading: false });
@@ -185,8 +185,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch (error) {
-      console.error('Initialization error:', error);
+    } catch {
+      console.error('Initialization error');
       clearTokens();
       set({
         user: null,
