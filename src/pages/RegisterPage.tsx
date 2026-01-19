@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus } from 'lucide-react';
+import { CaveoLogo } from '@/components/CaveoLogo';
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -47,17 +47,20 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <Card className="w-full max-w-md border-2">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
-              <UserPlus className="h-6 w-6 text-primary" />
+              <CaveoLogo className="h-12 w-12" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Create an account</CardTitle>
+          <CardTitle className="text-2xl text-center text-primary font-bold">Caveo</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started
+            Smart Wine Inventory ERP
+          </CardDescription>
+          <CardDescription className="text-center pt-2">
+            Create your account to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,7 +119,7 @@ export function RegisterPage() {
           </form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link to="/login" className="text-primary hover:underline font-medium">
               Sign in
             </Link>
           </div>
