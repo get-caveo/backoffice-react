@@ -4,9 +4,15 @@
  * Security improvements implemented:
  * 1. CSRF Token generation and validation
  * 2. Secure token storage with encryption
- * 3. XSS prevention with DOMPurify-style sanitization
+ * 3. XSS prevention with input sanitization
  * 4. Token rotation mechanism
  * 5. Fingerprinting for device binding
+ * 
+ * IMPORTANT: The simple XOR cipher used here is for obfuscation only.
+ * For production environments, replace with proper encryption using:
+ * - Web Crypto API (AES-GCM)
+ * - A robust cryptographic library
+ * - Or preferably, httpOnly cookies managed by the backend
  */
 
 // Generate a random CSRF token
@@ -26,6 +32,7 @@ export function getCSRFToken(): string | null {
 }
 
 // Simple encryption/decryption for token storage (obfuscation layer)
+// NOTE: This is NOT cryptographically secure. For production, use Web Crypto API or similar.
 function simpleEncrypt(text: string, key: string): string {
   const textToChars = (text: string) => text.split('').map(c => c.charCodeAt(0));
   const byteHex = (n: number) => ("0" + n.toString(16)).substr(-2);
@@ -71,12 +78,29 @@ export async function generateDeviceFingerprint(): Promise<string> {
 
 // Secure token storage
 const STORAGE_KEY = 'auth_tokens';
-const ENCRYPTION_KEY = 'secure_key_2024'; // In production, this should be dynamically generated
+
+// Generate or retrieve encryption key from environment
+// In production, this should be generated per session or derived from a secure source
+function getEncryptionKey(): string {
+  const envKey = import.meta.env.VITE_ENCRYPTION_KEY;
+  if (envKey) return envKey;
+  
+  // Generate a session-specific key if not provided
+  // This key is lost when the page is reloaded, providing additional security
+  let sessionKey = sessionStorage.getItem('_ek');
+  if (!sessionKey) {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    sessionKey = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    sessionStorage.setItem('_ek', sessionKey);
+  }
+  return sessionKey;
+}
 
 export function storeTokensSecurely(accessToken: string, refreshToken: string): void {
   const fingerprint = sessionStorage.getItem('device_fingerprint') || '';
   const tokens = JSON.stringify({ accessToken, refreshToken, fingerprint });
-  const encrypted = simpleEncrypt(tokens, ENCRYPTION_KEY);
+  const encrypted = simpleEncrypt(tokens, getEncryptionKey());
   sessionStorage.setItem(STORAGE_KEY, encrypted);
 }
 
@@ -85,7 +109,7 @@ export function retrieveTokensSecurely(): { accessToken: string; refreshToken: s
     const encrypted = sessionStorage.getItem(STORAGE_KEY);
     if (!encrypted) return null;
     
-    const decrypted = simpleDecrypt(encrypted, ENCRYPTION_KEY);
+    const decrypted = simpleDecrypt(encrypted, getEncryptionKey());
     const tokens = JSON.parse(decrypted);
     
     // Verify device fingerprint

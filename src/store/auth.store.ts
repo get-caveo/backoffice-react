@@ -185,8 +185,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch {
-      console.error('Initialization error');
+    } catch (error) {
+      console.error('Initialization error:', error);
       clearTokens();
       set({
         user: null,

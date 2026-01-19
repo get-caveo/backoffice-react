@@ -18,12 +18,13 @@ import {
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 // Mock user database (for demo purposes only)
+// NOTE: In production, NEVER store plaintext passwords. Always use proper hashing (bcrypt, argon2).
 const mockUsers: Array<User & { password: string }> = [
   {
     id: '1',
     email: 'demo@example.com',
     name: 'Demo User',
-    password: 'Demo@1234', // In production, passwords should be hashed
+    password: 'Demo@1234', // This is a DEMO only - use hashed passwords in production
   },
 ];
 
