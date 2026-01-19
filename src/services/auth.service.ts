@@ -22,7 +22,7 @@ import {
 const mockUsers: Array<User & { password: string }> = [
   {
     id: '1',
-    email: 'demo@example.com',
+    email: 'demo@caveo.com',
     name: 'Demo User',
     password: 'Demo@1234', // This is a DEMO only - use hashed passwords in production
   },
