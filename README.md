@@ -1,6 +1,6 @@
-# Backoffice React Boilerplate
+# Caveo - Smart Wine Inventory ERP
 
-A modern, secure React 19 boilerplate with TypeScript, Vite, shadcn/ui, Tailwind CSS, and Zustand for state management. Features a complete authentication system with enhanced security measures.
+A production-ready wine inventory ERP system built with React 19, featuring enterprise-grade JWT authentication and premium wine/grape branding.
 
 ## 🚀 Features
 
@@ -11,6 +11,16 @@ A modern, secure React 19 boilerplate with TypeScript, Vite, shadcn/ui, Tailwind
 - 🧩 **shadcn/ui** - Beautiful, accessible UI components
 - 🔐 **Zustand** - Lightweight state management
 - 🛡️ **Enhanced Security** - Multiple security layers for authentication
+- 🚀 **CI/CD** - Automated testing and deployment to Vercel
+
+## 🎨 Branding
+
+**Caveo - Smart Wine Inventory**
+
+Premium wine-themed design with:
+- **Colors**: Burgundy primary (#8b2748), deep purple secondary, gold accents, teal highlights
+- **Logo**: Custom SVG grape bunch with burgundy grapes and teal leaf
+- **Navigation**: Comprehensive ERP sidebar with Products, Stock, Orders, Suppliers, Customers, Analytics, Sales, Reports, Inventory, and Settings
 
 ## 🔒 Security Features
 
@@ -136,6 +146,74 @@ For testing purposes, use these credentials:
 
 - **Email**: demo@example.com
 - **Password**: Demo@1234
+
+## 🚀 CI/CD Pipeline
+
+This project includes a comprehensive CI/CD pipeline using GitHub Actions and Vercel.
+
+### Automated Workflows
+
+The pipeline runs automatically on:
+- **Push** to `main` or `copilot/create-react-boilerplate` branches
+- **Pull requests** to `main` branch
+
+### Pipeline Stages
+
+1. **Test & Build**
+   - Install dependencies (`npm ci`)
+   - Run ESLint checks (`npm run lint`)
+   - Run TypeScript type checking (`tsc -b --noEmit`)
+   - Build production artifacts (`npm run build`)
+   - Upload build artifacts (retained for 7 days)
+
+2. **Preview Deployment** (Pull Requests)
+   - Deploys to Vercel preview environment
+   - Posts deployment URL as PR comment
+   - Allows testing changes before merging
+
+3. **Production Deployment** (Main Branch)
+   - Deploys to Vercel production
+   - Updates production URL
+   - Creates deployment summary
+
+### Setup Instructions
+
+To enable CI/CD for your fork:
+
+1. **Create a Vercel Account**
+   - Sign up at [vercel.com](https://vercel.com)
+   - Install the [Vercel CLI](https://vercel.com/docs/cli): `npm i -g vercel`
+
+2. **Link Your Project**
+   ```bash
+   vercel link
+   ```
+
+3. **Get Your Vercel Token**
+   - Go to [Vercel Account Settings](https://vercel.com/account/tokens)
+   - Create a new token
+   - Copy the token value
+
+4. **Add GitHub Secret**
+   - Go to your repository Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `VERCEL_TOKEN`
+   - Value: Your Vercel token
+   - Click "Add secret"
+
+5. **Configure Vercel Project**
+   - The workflow will automatically pull Vercel configuration
+   - Ensure your `vercel.json` is properly configured
+
+### Environment Variables
+
+Set these in your Vercel project dashboard:
+- `VITE_API_BASE_URL` - Your backend API URL
+- `VITE_ENCRYPTION_KEY` - (Optional) Custom encryption key
+
+### Workflow File
+
+The CI/CD configuration is located at `.github/workflows/ci-cd.yml`
 
 ## 🔐 Production Deployment
 
