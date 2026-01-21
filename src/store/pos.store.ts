@@ -458,6 +458,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
       );
       return conditionnement;
     } catch (error) {
+      console.error(error);
       set({
         error: "Produit non trouvé pour ce code-barres",
       });
