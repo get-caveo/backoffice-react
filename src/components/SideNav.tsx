@@ -1,16 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { 
-  Package, 
-  Warehouse, 
-  TrendingUp, 
-  Users, 
-  FileText, 
+import {
+  Package,
+  Warehouse,
+  TrendingUp,
+  Users,
+  FileText,
   Settings,
   BarChart3,
   ShoppingCart,
   Wine,
-  Truck
+  Truck,
+  CreditCard
 } from 'lucide-react';
 
 interface SideNavItem {
@@ -20,6 +21,11 @@ interface SideNavItem {
 }
 
 const navItems: SideNavItem[] = [
+  {
+    title: 'Caisse',
+    href: '/dashboard/pos',
+    icon: CreditCard,
+  },
   {
     title: 'Produits',
     href: '/dashboard/products',

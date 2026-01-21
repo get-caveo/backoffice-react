@@ -8,6 +8,7 @@ import { ProductsPage } from '@/pages/ProductsPage';
 import { ProductFormPage } from '@/pages/ProductFormPage';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { StockPage } from '@/pages/StockPage';
+import { POSPage } from '@/pages/POSPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -79,6 +80,14 @@ function App() {
           element={
             <ProtectedRoute>
               <StockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/pos"
+          element={
+            <ProtectedRoute>
+              <POSPage />
             </ProtectedRoute>
           }
         />

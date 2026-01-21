@@ -18,6 +18,7 @@ import {
   RefreshCw,
   AlertTriangle,
   ChevronDown,
+  ScanBarcode,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,19 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [showBarcode, setShowBarcode] = useState(false);
+  const [expandedConds, setExpandedConds] = useState<Set<number>>(new Set());
+
+  const toggleCondExpanded = (condId: number) => {
+    setExpandedConds((prev) => {
+      const next = new Set(prev);
+      if (next.has(condId)) {
+        next.delete(condId);
+      } else {
+        next.add(condId);
+      }
+      return next;
+    });
+  };
 
   const {
     selectedProduct: product,
@@ -231,35 +245,84 @@ export function ProductDetailPage() {
               <CardContent>
                 {product.conditionnements && product.conditionnements.length > 0 ? (
                   <div className="space-y-3">
-                    {product.conditionnements.map((cond) => (
-                      <div
-                        key={cond.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                      >
-                        <div>
-                          <p className="font-medium">{cond.uniteConditionnement.nom}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {cond.uniteConditionnement.nomCourt}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            {cond.prixUnitaire.toLocaleString('fr-FR', {
-                              style: 'currency',
-                              currency: 'EUR',
-                            })}
-                          </p>
-                          <span
+                    {product.conditionnements.map((cond) => {
+                      const isExpanded = expandedConds.has(cond.id);
+                      return (
+                        <div
+                          key={cond.id}
+                          className="rounded-lg bg-muted/50 overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between p-3">
+                            <div>
+                              <p className="font-medium">{cond.uniteConditionnement.nom}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {cond.uniteConditionnement.nomCourt}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {cond.prixUnitaire.toLocaleString('fr-FR', {
+                                  style: 'currency',
+                                  currency: 'EUR',
+                                })}
+                              </p>
+                              <span
+                                className={cn(
+                                  'text-xs',
+                                  cond.disponible ? 'text-green-600' : 'text-red-600'
+                                )}
+                              >
+                                {cond.disponible ? 'Disponible' : 'Indisponible'}
+                              </span>
+                            </div>
+                          </div>
+                          {/* Accordion trigger for barcode */}
+                          <button
+                            onClick={() => toggleCondExpanded(cond.id)}
+                            className="w-full flex items-center justify-between px-3 py-2 border-t border-muted bg-muted/30 hover:bg-muted/50 transition-colors text-sm text-muted-foreground"
+                          >
+                            <span className="flex items-center gap-2">
+                              <ScanBarcode className="h-3.5 w-3.5" />
+                              Code-barre
+                            </span>
+                            <ChevronDown
+                              className={cn(
+                                'h-4 w-4 transition-transform duration-200',
+                                isExpanded && 'rotate-180'
+                              )}
+                            />
+                          </button>
+                          {/* Accordion content */}
+                          <div
                             className={cn(
-                              'text-xs',
-                              cond.disponible ? 'text-green-600' : 'text-red-600'
+                              'overflow-hidden transition-all duration-200',
+                              isExpanded ? 'max-h-40' : 'max-h-0'
                             )}
                           >
-                            {cond.disponible ? 'Disponible' : 'Indisponible'}
-                          </span>
+                            <div className="px-3 py-3 bg-white border-t border-muted">
+                              {cond.codeBarre ? (
+                                <div className="space-y-2 flex flex-col items-start">
+                                  <code className="font-mono text-md tracking-wider">
+                                    {cond.codeBarre}
+                                  </code>
+                                  <div className="p-2 bg-white rounded border inline-block">
+                                    <img
+                                      src={`https://barcodeapi.org/api/128/${cond.codeBarre}?dpi=300&height=15`}
+                                      alt={`Code-barre ${cond.codeBarre}`}
+                                      className="w-[200px] h-auto"
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground italic text-sm">
+                                  Aucun code-barre configuré
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">Aucun conditionnement configuré</p>
