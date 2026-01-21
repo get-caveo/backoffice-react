@@ -61,8 +61,10 @@ export interface ProduitConditionnement {
   id: number;
   prixUnitaire: number;
   disponible: boolean;
+  codeBarre?: string;
   creeLe?: string;
   uniteConditionnement: UniteConditionnement;
+  produit?: Produit;
 }
 
 export interface ProduitFournisseur {

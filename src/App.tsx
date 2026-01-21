@@ -4,6 +4,10 @@ import { useAuthStore } from '@/store/auth.store';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { ProductsPage } from '@/pages/ProductsPage';
+import { ProductFormPage } from '@/pages/ProductFormPage';
+import { ProductDetailPage } from '@/pages/ProductDetailPage';
+import { StockPage } from '@/pages/StockPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -35,6 +39,46 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/products"
+          element={
+            <ProtectedRoute>
+              <ProductsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/products/new"
+          element={
+            <ProtectedRoute>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/products/:id"
+          element={
+            <ProtectedRoute>
+              <ProductDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/products/:id/edit"
+          element={
+            <ProtectedRoute>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/stock"
+          element={
+            <ProtectedRoute>
+              <StockPage />
             </ProtectedRoute>
           }
         />

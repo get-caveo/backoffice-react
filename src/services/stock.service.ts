@@ -11,6 +11,7 @@ import type {
   MouvementStock,
   CreateMouvementInput,
 } from '@/types/stock';
+import type { ProduitConditionnement } from '@/types/product';
 
 // ============================================================================
 // Stock
@@ -121,4 +122,18 @@ export async function releaseStock(
     `/api/stock/liberer?produitId=${produitId}&uniteConditionnementId=${uniteConditionnementId}&quantite=${quantite}`,
     { token }
   );
+}
+
+// ============================================================================
+// Barcode Scanner
+// ============================================================================
+
+/**
+ * Get conditionnement by barcode (for scanner)
+ */
+export async function getConditionnementByBarcode(
+  token: string,
+  codeBarre: string
+): Promise<ProduitConditionnement> {
+  return apiClient.get<ProduitConditionnement>(`/api/stock/code-barre/${codeBarre}`, { token });
 }

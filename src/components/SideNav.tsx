@@ -21,7 +21,7 @@ interface SideNavItem {
 
 const navItems: SideNavItem[] = [
   {
-    title: 'Products',
+    title: 'Produits',
     href: '/dashboard/products',
     icon: Wine,
   },
@@ -31,42 +31,42 @@ const navItems: SideNavItem[] = [
     icon: Warehouse,
   },
   {
-    title: 'Orders',
+    title: 'Commandes',
     href: '/dashboard/orders',
     icon: ShoppingCart,
   },
   {
-    title: 'Suppliers',
+    title: 'Fournisseurs',
     href: '/dashboard/suppliers',
     icon: Truck,
   },
   {
-    title: 'Customers',
+    title: 'Clients',
     href: '/dashboard/customers',
     icon: Users,
   },
   {
-    title: 'Analytics',
+    title: 'Analytique',
     href: '/dashboard/analytics',
     icon: BarChart3,
   },
   {
-    title: 'Sales',
+    title: 'Ventes',
     href: '/dashboard/sales',
     icon: TrendingUp,
   },
   {
-    title: 'Reports',
+    title: 'Rapports',
     href: '/dashboard/reports',
     icon: FileText,
   },
   {
-    title: 'Inventory',
+    title: 'Inventaire',
     href: '/dashboard/inventory',
     icon: Package,
   },
   {
-    title: 'Settings',
+    title: 'Paramètres',
     href: '/dashboard/settings',
     icon: Settings,
   },

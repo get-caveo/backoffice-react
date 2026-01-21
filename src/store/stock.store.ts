@@ -12,6 +12,7 @@ import type {
   MouvementStock,
   CreateMouvementInput,
 } from '@/types/stock';
+import type { ProduitConditionnement } from '@/types/product';
 import * as stockService from '@/services/stock.service';
 import { useAuthStore } from './auth.store';
 
@@ -47,6 +48,9 @@ interface StockState {
     uniteConditionnementId: number,
     quantite: number
   ) => Promise<void>;
+
+  // Actions - Barcode Scanner
+  fetchConditionnementByBarcode: (codeBarre: string) => Promise<ProduitConditionnement | null>;
 
   // Utils
   clearError: () => void;
@@ -247,6 +251,23 @@ export const useStockStore = create<StockState>((set, get) => ({
           error instanceof Error ? error.message : 'Erreur lors de la libération du stock',
       });
       throw error;
+    }
+  },
+
+  // ============================================================================
+  // Barcode Scanner
+  // ============================================================================
+
+  fetchConditionnementByBarcode: async (codeBarre: string) => {
+    try {
+      const token = getToken();
+      return await stockService.getConditionnementByBarcode(token, codeBarre);
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : 'Code-barre non trouvé',
+      });
+      return null;
     }
   },
 
