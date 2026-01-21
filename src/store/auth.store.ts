@@ -1,88 +1,61 @@
 /**
  * Authentication Store using Zustand
- * 
- * Manages authentication state and provides methods for login, register, logout, etc.
+ *
+ * Manages authentication state and provides methods for login, logout, etc.
+ * Connects to the Java backend API (single JWT token model).
  */
 
 import { create } from 'zustand';
 import type { User } from '@/types/auth';
 import * as authService from '@/services/auth.service';
 import {
-  storeTokensSecurely,
-  retrieveTokensSecurely,
-  clearTokens,
+  storeTokenSecurely,
+  retrieveTokenSecurely,
+  clearToken,
   isTokenExpired,
-  generateDeviceFingerprint,
+  decodeJWT,
 } from '@/lib/security';
 
 interface AuthState {
   user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshAccessToken: () => Promise<void>;
   initialize: () => Promise<void>;
   clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  accessToken: null,
-  refreshToken: null,
+  token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
-    
+
     try {
       const response = await authService.login({ email, password });
-      
-      // Store tokens securely
-      storeTokensSecurely(response.accessToken, response.refreshToken);
-      
-      set({
-        user: response.user,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      set({
-        user: null,
-        accessToken: null,
-        refreshToken: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Login failed',
-      });
-      throw error;
-    }
-  },
 
-  register: async (email: string, password: string, name?: string) => {
-    set({ isLoading: true, error: null });
-    
-    try {
-      const response = await authService.register({ email, password, name });
-      
-      // Store tokens securely
-      storeTokensSecurely(response.accessToken, response.refreshToken);
-      
+      // Store token securely
+      storeTokenSecurely(response.token);
+
       set({
-        user: response.user,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
+        user: {
+          id: response.id,
+          email: response.email,
+          prenom: response.prenom,
+          nom: response.nom,
+          role: response.role,
+          actif: true,
+        },
+        token: response.token,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -90,11 +63,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       set({
         user: null,
-        accessToken: null,
-        refreshToken: null,
+        token: null,
         isAuthenticated: false,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Registration failed',
+        error: error instanceof Error ? error.message : 'Échec de la connexion',
       });
       throw error;
     }
@@ -102,18 +74,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     set({ isLoading: true });
-    
+
     try {
       await authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear tokens and reset state
-      clearTokens();
+      // Clear token and reset state
+      clearToken();
       set({
         user: null,
-        accessToken: null,
-        refreshToken: null,
+        token: null,
         isAuthenticated: false,
         isLoading: false,
         error: null,
@@ -121,77 +92,63 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  refreshAccessToken: async () => {
-    const { refreshToken } = get();
-    
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    
-    try {
-      const response = await authService.refreshAccessToken(refreshToken);
-      
-      // Update tokens
-      storeTokensSecurely(response.accessToken, refreshToken);
-      
-      set({
-        accessToken: response.accessToken,
-      });
-    } catch (error) {
-      // If refresh fails, log out the user
-      get().logout();
-      throw error;
-    }
-  },
-
   initialize: async () => {
     set({ isLoading: true });
-    
+
     try {
-      // Generate and store device fingerprint
-      const fingerprint = await generateDeviceFingerprint();
-      sessionStorage.setItem('device_fingerprint', fingerprint);
-      
-      // Retrieve tokens from secure storage
-      const tokens = retrieveTokensSecurely();
-      
-      if (!tokens) {
+      // Retrieve token from secure storage
+      const token = retrieveTokenSecurely();
+
+      if (!token) {
+        console.log('No token found during initialization');
         set({ isLoading: false });
         return;
       }
-      
-      // Check if access token is expired
-      if (isTokenExpired(tokens.accessToken)) {
-        // Try to refresh the token
-        try {
-          const response = await authService.refreshAccessToken(tokens.refreshToken);
-          tokens.accessToken = response.accessToken;
-          storeTokensSecurely(tokens.accessToken, tokens.refreshToken);
-        } catch {
-          // If refresh fails, clear tokens
-          clearTokens();
-          set({ isLoading: false });
-          return;
-        }
+
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        // Token expired, clear and return
+        console.log('Token expired during initialization');
+        clearToken();
+        set({ isLoading: false });
+        return;
       }
-      
-      // Get current user
-      const user = await authService.getCurrentUser(tokens.accessToken);
-      
+
+      // Decode token to get user ID
+      const decoded = decodeJWT(token);
+      console.log('Decoded token during initialization:', decoded);
+      if (!decoded || !decoded.id) {
+        console.log('Invalid token during initialization');
+        clearToken();
+        set({ isLoading: false });
+        return;
+      }
+
+      // Get current user profile
+      const user = await authService.getCurrentUser(token, decoded.id as number);
+
+      // Validate user has appropriate role for backoffice
+      if (user.role !== 'EMPLOYE' && user.role !== 'ADMIN') {
+        clearToken();
+        set({
+          isLoading: false,
+          error: 'Accès refusé - Rôle EMPLOYE ou ADMIN requis',
+        });
+        return;
+      }
+
       set({
         user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        token,
         isAuthenticated: true,
         isLoading: false,
       });
     } catch (error) {
       console.error('Initialization error:', error);
-      clearTokens();
+      clearToken();
       set({
         user: null,
-        accessToken: null,
-        refreshToken: null,
+        token: null,
         isAuthenticated: false,
         isLoading: false,
       });

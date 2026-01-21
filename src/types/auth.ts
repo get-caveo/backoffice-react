@@ -1,7 +1,15 @@
+export type UserRole = 'CLIENT' | 'EMPLOYE' | 'ADMIN';
+
 export interface User {
-  id: string;
+  id: number;
   email: string;
-  name?: string;
+  prenom: string;
+  nom: string;
+  telephone?: string;
+  role: UserRole;
+  actif: boolean;
+  creeLe?: string;
+  modifieLe?: string | null;
 }
 
 export interface LoginCredentials {
@@ -9,20 +17,25 @@ export interface LoginCredentials {
   password: string;
 }
 
-export interface RegisterCredentials extends LoginCredentials {
-  name?: string;
-}
-
 export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  token: string;
+  id: number;
+  email: string;
+  prenom: string;
+  nom: string;
+  role: UserRole;
 }
 
 export interface TokenPayload {
-  userId: string;
-  email: string;
+  sub: string; // email
+  role: UserRole;
+  userId: number;
   exp: number;
   iat: number;
-  jti?: string; // JWT ID for token tracking
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+  errors?: Record<string, string>;
 }

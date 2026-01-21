@@ -1,135 +1,16 @@
-/**
- * Security utilities for improved JWT authentication
- * 
- * Security improvements implemented:
- * 1. CSRF Token generation and validation
- * 2. Secure token storage with encryption
- * 3. XSS prevention with input sanitization
- * 4. Token rotation mechanism
- * 5. Fingerprinting for device binding
- * 
- * IMPORTANT: The simple XOR cipher used here is for obfuscation only.
- * For production environments, replace with proper encryption using:
- * - Web Crypto API (AES-GCM)
- * - A robust cryptographic library
- * - Or preferably, httpOnly cookies managed by the backend
- */
+// Token storage
+const STORAGE_KEY = 'auth_token';
 
-// Generate a random CSRF token
-export function generateCSRFToken(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+export function storeTokenSecurely(token: string): void {
+  localStorage.setItem(STORAGE_KEY, token);
 }
 
-// Store CSRF token in sessionStorage (not localStorage for better security)
-export function setCSRFToken(token: string): void {
-  sessionStorage.setItem('csrf_token', token);
+export function retrieveTokenSecurely(): string | null {
+  return localStorage.getItem(STORAGE_KEY);
 }
 
-export function getCSRFToken(): string | null {
-  return sessionStorage.getItem('csrf_token');
-}
-
-// Simple encryption/decryption for token storage (obfuscation layer)
-// NOTE: This is NOT cryptographically secure. For production, use Web Crypto API or similar.
-function simpleEncrypt(text: string, key: string): string {
-  const textToChars = (text: string) => text.split('').map(c => c.charCodeAt(0));
-  const byteHex = (n: number) => ("0" + n.toString(16)).substr(-2);
-  const applySaltToChar = (code: number) => textToChars(key).reduce((a, b) => a ^ b, code);
-  
-  return text
-    .split('')
-    .map(c => c.charCodeAt(0))
-    .map(applySaltToChar)
-    .map(byteHex)
-    .join('');
-}
-
-function simpleDecrypt(encoded: string, key: string): string {
-  const textToChars = (text: string) => text.split('').map(c => c.charCodeAt(0));
-  const applySaltToChar = (code: number) => textToChars(key).reduce((a, b) => a ^ b, code);
-  
-  return encoded
-    .match(/.{1,2}/g)!
-    .map(hex => parseInt(hex, 16))
-    .map(applySaltToChar)
-    .map(charCode => String.fromCharCode(charCode))
-    .join('');
-}
-
-// Generate a device fingerprint for binding tokens to specific devices
-export async function generateDeviceFingerprint(): Promise<string> {
-  const components = [
-    navigator.userAgent,
-    navigator.language,
-    new Date().getTimezoneOffset().toString(),
-    screen.colorDepth.toString(),
-    screen.width + 'x' + screen.height,
-  ];
-  
-  const fingerprint = components.join('|');
-  const encoder = new TextEncoder();
-  const data = encoder.encode(fingerprint);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Secure token storage
-const STORAGE_KEY = 'auth_tokens';
-
-// Generate or retrieve encryption key from environment
-// In production, this should be generated per session or derived from a secure source
-function getEncryptionKey(): string {
-  const envKey = import.meta.env.VITE_ENCRYPTION_KEY;
-  if (envKey) return envKey;
-  
-  // Generate a session-specific key if not provided
-  // This key is lost when the page is reloaded, providing additional security
-  let sessionKey = sessionStorage.getItem('_ek');
-  if (!sessionKey) {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    sessionKey = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    sessionStorage.setItem('_ek', sessionKey);
-  }
-  return sessionKey;
-}
-
-export function storeTokensSecurely(accessToken: string, refreshToken: string): void {
-  const fingerprint = sessionStorage.getItem('device_fingerprint') || '';
-  const tokens = JSON.stringify({ accessToken, refreshToken, fingerprint });
-  const encrypted = simpleEncrypt(tokens, getEncryptionKey());
-  sessionStorage.setItem(STORAGE_KEY, encrypted);
-}
-
-export function retrieveTokensSecurely(): { accessToken: string; refreshToken: string } | null {
-  try {
-    const encrypted = sessionStorage.getItem(STORAGE_KEY);
-    if (!encrypted) return null;
-    
-    const decrypted = simpleDecrypt(encrypted, getEncryptionKey());
-    const tokens = JSON.parse(decrypted);
-    
-    // Verify device fingerprint
-    const currentFingerprint = sessionStorage.getItem('device_fingerprint');
-    if (tokens.fingerprint && tokens.fingerprint !== currentFingerprint) {
-      console.warn('Device fingerprint mismatch - possible token theft');
-      clearTokens();
-      return null;
-    }
-    
-    return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
-  } catch (error) {
-    console.error('Error retrieving tokens:', error);
-    return null;
-  }
-}
-
-export function clearTokens(): void {
-  sessionStorage.removeItem(STORAGE_KEY);
-  sessionStorage.removeItem('csrf_token');
+export function clearToken(): void {
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 // Decode JWT token (without verification - for client-side use only)
