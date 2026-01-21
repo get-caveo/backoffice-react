@@ -99,7 +99,7 @@ export const apiClient = {
       method: "GET",
       headers: buildHeaders(token),
       ...fetchOptions,
-    });
+    } as unknown as RequestInit);
     return handleResponse<T>(response);
   },
 
@@ -140,7 +140,7 @@ export const apiClient = {
       method: "DELETE",
       headers: buildHeaders(token),
       ...fetchOptions,
-    });
+    } as unknown as RequestInit);
     return handleResponse<T>(response);
   },
 };

@@ -2,9 +2,6 @@
  * Stock-related types based on the backend API
  */
 
-import type { Produit, UniteConditionnement } from './product';
-import type { User } from './auth';
-
 export interface StockActuel {
   id: number;
   quantite: number;

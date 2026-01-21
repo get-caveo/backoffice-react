@@ -135,9 +135,6 @@ export function POSPage() {
     creerNouvelleVente();
   };
 
-  const resteAPayer =
-    (venteEnCours?.montantTotal ?? 0) - (venteEnCours?.montantPaye ?? 0);
-
   return (
     <DashboardLayout>
       {/* Listener de code-barres */}

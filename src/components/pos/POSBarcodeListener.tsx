@@ -13,7 +13,7 @@ interface POSBarcodeListenerProps {
 export function POSBarcodeListener({ onBarcodeScan, enabled = true }: POSBarcodeListenerProps) {
   const bufferRef = useRef<string>('');
   const lastKeyTimeRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   const THRESHOLD_MS = 50; // Temps max entre deux caractères pour être considéré comme un scan
   const MIN_LENGTH = 3; // Longueur minimale d'un code-barres
@@ -63,11 +63,11 @@ export function POSBarcodeListener({ onBarcodeScan, enabled = true }: POSBarcode
 
         // Clear timeout existant
         if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
+          window.clearTimeout(timeoutRef.current);
         }
 
         // Si pas d'Enter reçu après 100ms, traiter le buffer
-        timeoutRef.current = setTimeout(() => {
+        timeoutRef.current = window.setTimeout(() => {
           if (bufferRef.current.length >= MIN_LENGTH) {
             processBuffer();
           } else {

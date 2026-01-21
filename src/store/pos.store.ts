@@ -4,22 +4,24 @@
  * Manages POS state including current sale, cart, and payment operations.
  */
 
-import { create } from 'zustand';
+import * as categoryService from "@/services/category.service";
+import * as posService from "@/services/pos.service";
+import * as productService from "@/services/product.service";
 import type {
-  VentePOS,
-  LigneVentePOS,
   LigneVentePOSDto,
   PaiementVentePOSDto,
   RemiseDto,
-  TicketVentePOS,
   StatsJourPOS,
-  ModePaiement,
-} from '@/types/pos';
-import type { Produit, Categorie, ProduitConditionnement } from '@/types/product';
-import * as posService from '@/services/pos.service';
-import * as productService from '@/services/product.service';
-import * as categoryService from '@/services/category.service';
-import { useAuthStore } from './auth.store';
+  TicketVentePOS,
+  VentePOS,
+} from "@/types/pos";
+import type {
+  Categorie,
+  Produit,
+  ProduitConditionnement,
+} from "@/types/product";
+import { create } from "zustand";
+import { useAuthStore } from "./auth.store";
 
 interface POSState {
   // Vente en cours
@@ -69,7 +71,9 @@ interface POSState {
   genererTicket: () => Promise<void>;
 
   // Actions - Code-barres
-  rechercherParCodeBarre: (codeBarre: string) => Promise<ProduitConditionnement | null>;
+  rechercherParCodeBarre: (
+    codeBarre: string,
+  ) => Promise<ProduitConditionnement | null>;
 
   // Actions - Stats
   chargerStatsJour: () => Promise<void>;
@@ -85,7 +89,7 @@ interface POSState {
 function getToken(): string {
   const token = useAuthStore.getState().token;
   if (!token) {
-    throw new Error('Non authentifié');
+    throw new Error("Non authentifié");
   }
   return token;
 }
@@ -128,7 +132,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'initialisation du POS',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de l'initialisation du POS",
       });
     }
   },
@@ -139,11 +146,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const produits = await productService.getProducts(token, {});
       // Filtrer uniquement les produits actifs avec au moins un conditionnement
       const produitsActifs = produits.filter(
-        (p) => p.actif && p.conditionnements && p.conditionnements.length > 0
+        (p) => p.actif && p.conditionnements && p.conditionnements.length > 0,
       );
       set({ produits: produitsActifs });
     } catch (error) {
-      console.error('Erreur chargement produits:', error);
+      console.error("Erreur chargement produits:", error);
     }
   },
 
@@ -154,10 +161,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const categoriesActives = categories.filter((c) => c.actif);
       set({
         categories: categoriesActives,
-        categorieActiveId: categoriesActives.length > 0 ? categoriesActives[0].id : null,
+        categorieActiveId:
+          categoriesActives.length > 0 ? categoriesActives[0].id : null,
       });
     } catch (error) {
-      console.error('Erreur chargement catégories:', error);
+      console.error("Erreur chargement catégories:", error);
     }
   },
 
@@ -174,7 +182,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la création de la vente',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la création de la vente",
       });
     }
   },
@@ -188,7 +199,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement de la vente',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors du chargement de la vente",
       });
     }
   },
@@ -201,11 +215,18 @@ export const usePOSStore = create<POSState>((set, get) => ({
     try {
       const token = getToken();
       await posService.annulerVente(token, venteEnCours.id);
-      set({ venteEnCours: null, isLoading: false, successMessage: 'Vente annulée' });
+      set({
+        venteEnCours: null,
+        isLoading: false,
+        successMessage: "Vente annulée",
+      });
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'annulation',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de l'annulation",
       });
     }
   },
@@ -224,7 +245,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
     }
 
     if (!venteEnCours) {
-      set({ error: 'Impossible de créer une vente' });
+      set({ error: "Impossible de créer une vente" });
       return;
     }
 
@@ -238,7 +259,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'ajout au panier',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de l'ajout au panier",
       });
     }
   },
@@ -250,13 +274,21 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const token = getToken();
-      await posService.modifierQuantiteLigne(token, venteEnCours.id, ligneId, quantite);
+      await posService.modifierQuantiteLigne(
+        token,
+        venteEnCours.id,
+        ligneId,
+        quantite,
+      );
       const venteUpdated = await posService.getVente(token, venteEnCours.id);
       set({ venteEnCours: venteUpdated, isLoading: false });
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la modification',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la modification",
       });
     }
   },
@@ -274,7 +306,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la suppression',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
       });
     }
   },
@@ -290,12 +325,19 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const token = getToken();
-      const venteUpdated = await posService.appliquerRemise(token, venteEnCours.id, dto);
+      const venteUpdated = await posService.appliquerRemise(
+        token,
+        venteEnCours.id,
+        dto,
+      );
       set({ venteEnCours: venteUpdated, isLoading: false });
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de l\'application de la remise',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de l'application de la remise",
       });
     }
   },
@@ -307,12 +349,18 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const token = getToken();
-      const venteUpdated = await posService.supprimerRemise(token, venteEnCours.id);
+      const venteUpdated = await posService.supprimerRemise(
+        token,
+        venteEnCours.id,
+      );
       set({ venteEnCours: venteUpdated, isLoading: false });
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la suppression de la remise',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression de la remise",
       });
     }
   },
@@ -334,7 +382,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
     } catch (error) {
       set({
         isProcessingPayment: false,
-        error: error instanceof Error ? error.message : 'Erreur lors du paiement',
+        error:
+          error instanceof Error ? error.message : "Erreur lors du paiement",
       });
     }
   },
@@ -346,7 +395,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set({ isProcessingPayment: true, error: null });
     try {
       const token = getToken();
-      const venteFinal = await posService.finaliserVente(token, venteEnCours.id);
+      const venteFinal = await posService.finaliserVente(
+        token,
+        venteEnCours.id,
+      );
 
       // Générer le ticket
       const ticket = await posService.getTicket(token, venteFinal.id);
@@ -358,12 +410,15 @@ export const usePOSStore = create<POSState>((set, get) => ({
         venteEnCours: null,
         ticketCourant: ticket,
         isProcessingPayment: false,
-        successMessage: 'Vente finalisée avec succès',
+        successMessage: "Vente finalisée avec succès",
       });
     } catch (error) {
       set({
         isProcessingPayment: false,
-        error: error instanceof Error ? error.message : 'Erreur lors de la finalisation',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la finalisation",
       });
     }
   },
@@ -382,7 +437,10 @@ export const usePOSStore = create<POSState>((set, get) => ({
       set({ ticketCourant: ticket });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la génération du ticket',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la génération du ticket",
       });
     }
   },
@@ -394,11 +452,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
   rechercherParCodeBarre: async (codeBarre: string) => {
     try {
       const token = getToken();
-      const conditionnement = await posService.rechercherParCodeBarre(token, codeBarre);
+      const conditionnement = await posService.rechercherParCodeBarre(
+        token,
+        codeBarre,
+      );
       return conditionnement;
     } catch (error) {
       set({
-        error: 'Produit non trouvé pour ce code-barres',
+        error: "Produit non trouvé pour ce code-barres",
       });
       return null;
     }
@@ -414,7 +475,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const stats = await posService.getStatsJour(token);
       set({ statsJour: stats });
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      console.error("Erreur chargement stats:", error);
     }
   },
 

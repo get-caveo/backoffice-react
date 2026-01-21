@@ -13,7 +13,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { register, isLoading, error, clearError } = useAuthStore();
+  const { isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -31,7 +31,8 @@ export function RegisterPage() {
     }
 
     try {
-      await register(email, password, name);
+      // await register(email, password, name);
+      throw new Error('Registration service not implemented yet');
       toast({
         title: 'Success',
         description: 'Your account has been created successfully.',
