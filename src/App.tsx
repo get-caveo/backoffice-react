@@ -7,10 +7,19 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { ProductsPage } from '@/pages/ProductsPage';
 import { ProductFormPage } from '@/pages/ProductFormPage';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
-import { StockPage } from '@/pages/StockPage';
 import { POSPage } from '@/pages/POSPage';
+import { SuppliersPage } from '@/pages/SuppliersPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
+import {
+  StockEtatPage,
+  StockAlertesPage,
+  StockMouvementsPage,
+  StockScannerPage,
+  StockReceptionPage,
+  StockInventairesPage,
+  StockCommandesPage,
+} from '@/pages/stock';
 
 function App() {
   const { initialize, isLoading } = useAuthStore();
@@ -75,14 +84,76 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Gestion Stock - Routes avec sidebar interne */}
         <Route
-          path="/dashboard/stock"
+          path="/dashboard/gestion-stock"
           element={
             <ProtectedRoute>
-              <StockPage />
+              <StockEtatPage />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/dashboard/gestion-stock/alertes"
+          element={
+            <ProtectedRoute>
+              <StockAlertesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/gestion-stock/mouvements"
+          element={
+            <ProtectedRoute>
+              <StockMouvementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/gestion-stock/scanner"
+          element={
+            <ProtectedRoute>
+              <StockScannerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/gestion-stock/inventaires"
+          element={
+            <ProtectedRoute>
+              <StockInventairesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/gestion-stock/commandes"
+          element={
+            <ProtectedRoute>
+              <StockCommandesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/gestion-stock/reception"
+          element={
+            <ProtectedRoute>
+              <StockReceptionPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Fournisseurs */}
+        <Route
+          path="/dashboard/suppliers"
+          element={
+            <ProtectedRoute>
+              <SuppliersPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Redirects pour anciennes URLs */}
+        <Route path="/dashboard/stock" element={<Navigate to="/dashboard/gestion-stock" replace />} />
+        <Route path="/dashboard/inventory" element={<Navigate to="/dashboard/gestion-stock/inventaires" replace />} />
+        <Route path="/dashboard/commandes-fournisseur" element={<Navigate to="/dashboard/gestion-stock/commandes" replace />} />
         <Route
           path="/dashboard/pos"
           element={

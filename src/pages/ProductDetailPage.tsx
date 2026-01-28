@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProductStore } from '@/store/product.store';
+import { useAuthStore } from '@/store/auth.store';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,19 +15,23 @@ import {
   Thermometer,
   Grape,
   Calendar,
-  Barcode,
   RefreshCw,
   AlertTriangle,
   ChevronDown,
   ScanBarcode,
+  ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import * as stockService from '@/services/stock.service';
+import type { StockActuel } from '@/types/stock';
 
 export function ProductDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [showBarcode, setShowBarcode] = useState(false);
   const [expandedConds, setExpandedConds] = useState<Set<number>>(new Set());
+  const [stockByConditionnement, setStockByConditionnement] = useState<Record<number, StockActuel>>({});
+  const [isLoadingStock, setIsLoadingStock] = useState(false);
+  const { token } = useAuthStore();
 
   const toggleCondExpanded = (condId: number) => {
     setExpandedConds((prev) => {
@@ -58,6 +63,27 @@ export function ProductDetailPage() {
       clearSelectedProduct();
     };
   }, [id, fetchProduct, clearSelectedProduct]);
+
+  // Charger le stock par conditionnement
+  useEffect(() => {
+    const loadStock = async () => {
+      if (!token || !product?.id) return;
+      setIsLoadingStock(true);
+      try {
+        const stockData = await stockService.getProductStock(token, product.id);
+        const stockMap: Record<number, StockActuel> = {};
+        stockData.forEach((s) => {
+          stockMap[s.uniteConditionnement.id] = s;
+        });
+        setStockByConditionnement(stockMap);
+      } catch {
+        // Silently fail - stock info is optional
+      } finally {
+        setIsLoadingStock(false);
+      }
+    };
+    loadStock();
+  }, [token, product?.id]);
 
   const handleDelete = async () => {
     if (!product) return;
@@ -233,20 +259,21 @@ export function ProductDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Conditionnements */}
+            {/* Conditionnements & Stock */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Conditionnements
+                  Conditionnements & Stock
                 </CardTitle>
-                <CardDescription>Prix par unité de conditionnement</CardDescription>
+                <CardDescription>Prix et stock par unité de conditionnement</CardDescription>
               </CardHeader>
               <CardContent>
                 {product.conditionnements && product.conditionnements.length > 0 ? (
                   <div className="space-y-3">
                     {product.conditionnements.map((cond) => {
                       const isExpanded = expandedConds.has(cond.id);
+                      const stock = stockByConditionnement[cond.uniteConditionnement.id];
                       return (
                         <div
                           key={cond.id}
@@ -274,6 +301,33 @@ export function ProductDetailPage() {
                               >
                                 {cond.disponible ? 'Disponible' : 'Indisponible'}
                               </span>
+                            </div>
+                          </div>
+                          {/* Stock info */}
+                          <div className="px-3 py-2 border-t border-muted bg-muted/30">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Stock</span>
+                              {isLoadingStock ? (
+                                <span className="text-muted-foreground">...</span>
+                              ) : stock ? (
+                                <div className="flex items-center gap-3">
+                                  <span className={cn(
+                                    'font-medium',
+                                    stock.quantiteDisponible <= 0 ? 'text-red-600' :
+                                    (product.seuilStockMinimal && stock.quantiteDisponible <= product.seuilStockMinimal) ? 'text-yellow-600' :
+                                    'text-green-600'
+                                  )}>
+                                    {stock.quantiteDisponible} disponible{stock.quantiteDisponible > 1 ? 's' : ''}
+                                  </span>
+                                  {stock.quantiteReservee > 0 && (
+                                    <span className="text-muted-foreground text-xs">
+                                      ({stock.quantiteReservee} réservé{stock.quantiteReservee > 1 ? 's' : ''})
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground italic">Aucun stock</span>
+                              )}
                             </div>
                           </div>
                           {/* Accordion trigger for barcode */}
@@ -332,36 +386,89 @@ export function ProductDetailPage() {
 
             {/* Fournisseurs */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Fournisseurs
-                </CardTitle>
-                <CardDescription>Fournisseurs et prix d'achat</CardDescription>
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Fournisseurs
+                  </CardTitle>
+                  <CardDescription>Fournisseurs, conditionnements et prix d'achat</CardDescription>
+                </div>
+                {product.fournisseurs && product.fournisseurs.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/dashboard/stock/commandes?produitId=${product.id}`)}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Commander
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {product.fournisseurs && product.fournisseurs.length > 0 ? (
-                  <div className="space-y-3">
-                    {product.fournisseurs.map((fourn) => (
-                      <div
-                        key={fourn.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                      >
-                        <div>
-                          <p className="font-medium">{fourn.fournisseur.nom}</p>
-                          {fourn.delaiApproJours && (
-                            <p className="text-sm text-muted-foreground">
-                              Délai: {fourn.delaiApproJours} jours
-                            </p>
+                  <div className="space-y-4">
+                    {/* Group fournisseurs by name */}
+                    {Object.entries(
+                      product.fournisseurs.reduce(
+                        (acc, fourn) => {
+                          const key = fourn.fournisseur.id;
+                          if (!acc[key]) {
+                            acc[key] = {
+                              fournisseur: fourn.fournisseur,
+                              conditionnements: [],
+                            };
+                          }
+                          acc[key].conditionnements.push(fourn);
+                          return acc;
+                        },
+                        {} as Record<
+                          number,
+                          {
+                            fournisseur: typeof product.fournisseurs[0]['fournisseur'];
+                            conditionnements: typeof product.fournisseurs;
+                          }
+                        >
+                      )
+                    ).map(([fournisseurId, { fournisseur, conditionnements }]) => (
+                      <div key={fournisseurId} className="rounded-lg border">
+                        <div className="p-3 bg-muted/30 border-b">
+                          <p className="font-medium">{fournisseur.nom}</p>
+                          {fournisseur.email && (
+                            <p className="text-sm text-muted-foreground">{fournisseur.email}</p>
                           )}
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            {fourn.prixFournisseur.toLocaleString('fr-FR', {
-                              style: 'currency',
-                              currency: 'EUR',
-                            })}
-                          </p>
+                        <div className="divide-y">
+                          {conditionnements.map((fourn) => (
+                            <div
+                              key={fourn.id}
+                              className="flex items-center justify-between p-3"
+                            >
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {fourn.uniteConditionnement?.nom || 'Unité non spécifiée'}
+                                </p>
+                                {fourn.uniteConditionnement?.nomCourt && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {fourn.uniteConditionnement.nomCourt}
+                                  </p>
+                                )}
+                                {fourn.delaiApproJours != null && fourn.delaiApproJours > 0 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Délai: {fourn.delaiApproJours} jours
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium">
+                                  {fourn.prixFournisseur.toLocaleString('fr-FR', {
+                                    style: 'currency',
+                                    currency: 'EUR',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
@@ -375,51 +482,6 @@ export function ProductDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Identifiants</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Barcode className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div className="flex-1">
-                    <dt className="text-sm font-medium text-muted-foreground">Code-barre</dt>
-                    <dd className="mt-1 font-mono text-sm">{product.codeBarre || '-'}</dd>
-                    {product.codeBarre && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-2 h-auto p-0 hover:bg-transparent"
-                          onClick={() => setShowBarcode(!showBarcode)}
-                        >
-                          <span className="text-sm text-primary flex items-center gap-1">
-                            {showBarcode ? 'Masquer le code-barre' : 'Afficher le code-barre'}
-                            <ChevronDown
-                              className={cn(
-                                'h-3 w-3 transition-transform duration-200',
-                                showBarcode && 'rotate-180'
-                              )}
-                            />
-                          </span>
-                        </Button>
-                        {showBarcode && (
-                          <div className="mt-3 p-3 bg-white rounded border">
-                            <img
-                              src={`https://barcodeapi.org/api/128/${product.codeBarre}?&dpi=400&height=18`}
-                              alt={`Code-barre ${product.codeBarre}`}
-                              className="max-w-full h-auto"
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Stock Settings */}
             <Card>
               <CardHeader>
@@ -471,38 +533,6 @@ export function ProductDetailPage() {
               </Card>
             )}
 
-            {/* Metadata */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Métadonnées</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {product.creeLe && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Créé le</span>
-                    <span>
-                      {new Date(product.creeLe).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                )}
-                {product.modifieLe && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Modifié le</span>
-                    <span>
-                      {new Date(product.modifieLe).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

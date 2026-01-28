@@ -15,7 +15,6 @@ export function CaveoLogo({ className = "h-8 w-8" }: { className?: string }) {
       <circle cx="50" cy="59" r="8" fill="#6B1F3D" stroke="#2D5F5D" strokeWidth="1.5" />
       <circle cx="65" cy="59" r="8" fill="#6B1F3D" stroke="#2D5F5D" strokeWidth="1.5" />
       <circle cx="57" cy="71" r="8" fill="#6B1F3D" stroke="#2D5F5D" strokeWidth="1.5" />
-      <circle cx="50" cy="83" r="8" fill="#6B1F3D" stroke="#2D5F5D" strokeWidth="1.5" />
       
       {/* Leaf - teal green */}
       <path

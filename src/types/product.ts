@@ -73,6 +73,7 @@ export interface ProduitFournisseur {
   delaiApproJours?: number;
   creeLe?: string;
   fournisseur: Fournisseur;
+  uniteConditionnement: UniteConditionnement;
   produit?: { id: number; sku: string; nom: string };
 }
 
