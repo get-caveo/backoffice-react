@@ -398,7 +398,7 @@ export function ProductDetailPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate(`/dashboard/stock/commandes?produitId=${product.id}`)}
+                    onClick={() => navigate(`/dashboard/gestion-stock/commandes?produitId=${product.id}`)}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Commander

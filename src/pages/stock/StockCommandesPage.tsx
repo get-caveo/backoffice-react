@@ -56,6 +56,11 @@ export function StockCommandesPage() {
   const [lignePrixUnitaire, setLignePrixUnitaire] = useState<number>(0);
   const [isAddingLigne, setIsAddingLigne] = useState(false);
   const [isDeletingLigne, setIsDeletingLigne] = useState<number | null>(null);
+  const [pendingProduitIdForNewCommande, setPendingProduitIdForNewCommande] = useState<number | null>(null);
+  const [editingLigneId, setEditingLigneId] = useState<number | null>(null);
+  const [editingQuantite, setEditingQuantite] = useState<number>(0);
+  const [editingPrix, setEditingPrix] = useState<number>(0);
+  const [isUpdatingLigne, setIsUpdatingLigne] = useState(false);
 
   const fetchCommandes = async () => {
     if (!token) return;
@@ -78,6 +83,7 @@ export function StockCommandesPage() {
   // Si un produitId est passé en paramètre, ouvrir directement le modal de création
   useEffect(() => {
     if (initialProduitId && token && !isLoading) {
+      setPendingProduitIdForNewCommande(initialProduitId);
       handleOpenCreateModal();
       // Nettoyer le paramètre de l'URL après ouverture
       setSearchParams({});
@@ -135,6 +141,7 @@ export function StockCommandesPage() {
   const handleCreateCommande = async () => {
     if (!token || !selectedFournisseurId) return;
     setIsCreating(true);
+    const produitIdToAdd = pendingProduitIdForNewCommande;
     try {
       const newCommande = await commandeService.createCommandeFournisseur(
         token,
@@ -143,6 +150,23 @@ export function StockCommandesPage() {
       );
       setCommandes([newCommande, ...commandes]);
       setShowCreateModal(false);
+      setPendingProduitIdForNewCommande(null);
+
+      // Si on avait un produit pré-sélectionné, ouvrir les détails et le formulaire d'ajout
+      if (produitIdToAdd) {
+        // Ouvrir les détails de la commande créée
+        setShowDetailModal(true);
+        setIsLoadingDetail(true);
+        try {
+          const commande = await commandeService.getCommandeFournisseur(token, newCommande.id);
+          setCommandeDetail(commande);
+          setIsLoadingDetail(false);
+          // Ouvrir le formulaire d'ajout avec le produit pré-sélectionné
+          handleOpenAddLigneForm(produitIdToAdd);
+        } catch {
+          setIsLoadingDetail(false);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création');
     } finally {
@@ -242,10 +266,10 @@ export function StockCommandesPage() {
     }
   };
 
-  const handleOpenAddLigneForm = async () => {
+  const handleOpenAddLigneForm = async (preselectedProduitId?: number | null) => {
     if (!token) return;
     setShowAddLigneForm(true);
-    setSelectedProduitId(null);
+    setSelectedProduitId(preselectedProduitId ?? null);
     setSelectedConditionnementId(null);
     setLigneQuantite(1);
     setLignePrixUnitaire(0);
@@ -253,6 +277,15 @@ export function StockCommandesPage() {
     try {
       const data = await productService.getProducts(token);
       setProduits(data);
+      // Si un produit est pré-sélectionné, on met à jour le prix avec le premier conditionnement
+      if (preselectedProduitId) {
+        const preselectedProduit = data.find((p) => p.id === preselectedProduitId);
+        if (preselectedProduit?.conditionnements?.[0]) {
+          const firstCond = preselectedProduit.conditionnements[0];
+          setSelectedConditionnementId(firstCond.uniteConditionnement.id);
+          setLignePrixUnitaire(firstCond.prixUnitaire);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des produits');
       setShowAddLigneForm(false);
@@ -283,6 +316,38 @@ export function StockCommandesPage() {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout de la ligne');
     } finally {
       setIsAddingLigne(false);
+    }
+  };
+
+  const handleStartEditLigne = (ligne: { id: number; quantite: number; prixUnitaire: number }) => {
+    setEditingLigneId(ligne.id);
+    setEditingQuantite(ligne.quantite);
+    setEditingPrix(ligne.prixUnitaire);
+  };
+
+  const handleCancelEditLigne = () => {
+    setEditingLigneId(null);
+    setEditingQuantite(0);
+    setEditingPrix(0);
+  };
+
+  const handleSaveEditLigne = async () => {
+    if (!token || !commandeDetail || !editingLigneId) return;
+    setIsUpdatingLigne(true);
+    try {
+      await commandeService.updateLigneCommande(token, commandeDetail.id, editingLigneId, {
+        quantite: editingQuantite,
+        prixUnitaire: editingPrix,
+      });
+      // Recharger la commande
+      const updated = await commandeService.getCommandeFournisseur(token, commandeDetail.id);
+      setCommandeDetail(updated);
+      setCommandes(commandes.map((c) => (c.id === updated.id ? updated : c)));
+      setEditingLigneId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+    } finally {
+      setIsUpdatingLigne(false);
     }
   };
 
@@ -870,52 +935,121 @@ export function StockCommandesPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {commandeDetail.lignes.map((ligne) => (
-                              <tr key={ligne.id} className="border-t">
-                                <td className="py-2 px-3">
-                                  <div className="font-medium">{ligne.produit.nom}</div>
-                                  <div className="text-xs text-muted-foreground">{ligne.produit.sku}</div>
-                                </td>
-                                <td className="py-2 px-3 text-sm">
-                                  {ligne.uniteConditionnement.nom}
-                                </td>
-                                <td className="py-2 px-3 text-center">{ligne.quantite}</td>
-                                <td className="py-2 px-3 text-center">
-                                  <span
-                                    className={cn(
-                                      ligne.quantiteRecue === ligne.quantite
-                                        ? 'text-green-600'
-                                        : ligne.quantiteRecue > 0
-                                          ? 'text-yellow-600'
-                                          : 'text-muted-foreground'
-                                    )}
-                                  >
-                                    {ligne.quantiteRecue}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3 text-right">{ligne.prixUnitaire.toFixed(2)} €</td>
-                                <td className="py-2 px-3 text-right font-medium">
-                                  {ligne.prixTotal.toFixed(2)} €
-                                </td>
-                                {commandeDetail.statut === 'BROUILLON' && (
-                                  <td className="py-2 px-3 text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                      onClick={() => handleDeleteLigne(ligne.id)}
-                                      disabled={isDeletingLigne === ligne.id}
-                                    >
-                                      {isDeletingLigne === ligne.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="h-4 w-4" />
-                                      )}
-                                    </Button>
+                            {commandeDetail.lignes.map((ligne) => {
+                              const isEditing = editingLigneId === ligne.id;
+                              return (
+                                <tr key={ligne.id} className="border-t">
+                                  <td className="py-2 px-3">
+                                    <div className="font-medium">{ligne.produit.nom}</div>
+                                    <div className="text-xs text-muted-foreground">{ligne.produit.sku}</div>
                                   </td>
-                                )}
-                              </tr>
-                            ))}
+                                  <td className="py-2 px-3 text-sm">
+                                    {ligne.uniteConditionnement.nom}
+                                  </td>
+                                  <td className="py-2 px-3 text-center">
+                                    {isEditing ? (
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        value={editingQuantite}
+                                        onChange={(e) => setEditingQuantite(Math.max(1, parseInt(e.target.value) || 1))}
+                                        className="w-20 h-8 text-center mx-auto"
+                                        disabled={isUpdatingLigne}
+                                      />
+                                    ) : (
+                                      <span
+                                        className={commandeDetail.statut === 'BROUILLON' ? 'cursor-pointer hover:underline' : ''}
+                                        onClick={() => commandeDetail.statut === 'BROUILLON' && handleStartEditLigne(ligne)}
+                                      >
+                                        {ligne.quantite}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 px-3 text-center">
+                                    <span
+                                      className={cn(
+                                        ligne.quantiteRecue === ligne.quantite
+                                          ? 'text-green-600'
+                                          : ligne.quantiteRecue > 0
+                                            ? 'text-yellow-600'
+                                            : 'text-muted-foreground'
+                                      )}
+                                    >
+                                      {ligne.quantiteRecue}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 px-3 text-right">
+                                    {isEditing ? (
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        step={0.01}
+                                        value={editingPrix}
+                                        onChange={(e) => setEditingPrix(parseFloat(e.target.value) || 0)}
+                                        className="w-24 h-8 text-right ml-auto"
+                                        disabled={isUpdatingLigne}
+                                      />
+                                    ) : (
+                                      <span
+                                        className={commandeDetail.statut === 'BROUILLON' ? 'cursor-pointer hover:underline' : ''}
+                                        onClick={() => commandeDetail.statut === 'BROUILLON' && handleStartEditLigne(ligne)}
+                                      >
+                                        {ligne.prixUnitaire.toFixed(2)} €
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 px-3 text-right font-medium">
+                                    {isEditing
+                                      ? (editingQuantite * editingPrix).toFixed(2)
+                                      : ligne.prixTotal.toFixed(2)} €
+                                  </td>
+                                  {commandeDetail.statut === 'BROUILLON' && (
+                                    <td className="py-2 px-3 text-right">
+                                      {isEditing ? (
+                                        <div className="flex items-center justify-end gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0"
+                                            onClick={handleSaveEditLigne}
+                                            disabled={isUpdatingLigne}
+                                          >
+                                            {isUpdatingLigne ? (
+                                              <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                              <Check className="h-4 w-4 text-green-600" />
+                                            )}
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0"
+                                            onClick={handleCancelEditLigne}
+                                            disabled={isUpdatingLigne}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteLigne(ligne.id)}
+                                          disabled={isDeletingLigne === ligne.id}
+                                        >
+                                          {isDeletingLigne === ligne.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      )}
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            })}
                           </tbody>
                           <tfoot className="bg-muted/30">
                             <tr className="border-t">

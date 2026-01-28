@@ -107,6 +107,21 @@ export async function addLigneCommande(
 }
 
 /**
+ * Update a line in a commande (BROUILLON only)
+ */
+export async function updateLigneCommande(
+  token: string,
+  commandeId: number,
+  ligneId: number,
+  data: { quantite: number; prixUnitaire: number }
+): Promise<LigneCommandeFournisseur> {
+  return apiClient.put<LigneCommandeFournisseur>(
+    `/api/commandes-fournisseur/${commandeId}/lignes/${ligneId}`,
+    { token, body: data }
+  );
+}
+
+/**
  * Delete a line from a commande
  */
 export async function deleteLigneCommande(

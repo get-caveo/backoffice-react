@@ -1,20 +1,27 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useStockStore } from '@/store/stock.store';
-import { StockLayout } from '@/components/StockLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ScanBarcode, Search, X, ArrowUpRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { StockActuel } from '@/types/stock';
-import type { ProduitConditionnement } from '@/types/product';
+import { StockLayout } from "@/components/StockLayout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { useStockStore } from "@/store/stock.store";
+import type { ProduitConditionnement } from "@/types/product";
+import type { StockActuel } from "@/types/stock";
+import { ArrowUpRight, ScanBarcode, Search, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function StockScannerPage() {
   const navigate = useNavigate();
-  const [barcode, setBarcode] = useState('');
+  const [barcode, setBarcode] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [scannedConditionnement, setScannedConditionnement] = useState<ProduitConditionnement | null>(null);
+  const [scannedConditionnement, setScannedConditionnement] =
+    useState<ProduitConditionnement | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [productStock, setProductStock] = useState<StockActuel[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,20 +40,22 @@ export function StockScannerPage() {
     setProductStock([]);
 
     try {
-      const conditionnement = await fetchConditionnementByBarcode(barcode.trim());
+      const conditionnement = await fetchConditionnementByBarcode(
+        barcode.trim(),
+      );
+      setBarcode("");
       if (conditionnement && conditionnement.produit) {
         setScannedConditionnement(conditionnement);
         const stock = await fetchProductStock(conditionnement.produit.id);
         setProductStock(stock);
       } else {
         setSearchError(`Aucun produit trouvé pour le code-barre: ${barcode}`);
-        setBarcode('');
       }
     } catch (error) {
       setSearchError(
-        error instanceof Error ? error.message : 'Erreur lors de la recherche'
+        error instanceof Error ? error.message : "Erreur lors de la recherche",
       );
-      setBarcode('');
+      setBarcode("");
     } finally {
       setIsSearching(false);
       inputRef.current?.focus();
@@ -54,13 +63,13 @@ export function StockScannerPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
 
   const handleClear = () => {
-    setBarcode('');
+    setBarcode("");
     setScannedConditionnement(null);
     setProductStock([]);
     setSearchError(null);
@@ -100,7 +109,10 @@ export function StockScannerPage() {
                   autoFocus
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isSearching || !barcode.trim()}>
+              <Button
+                onClick={handleSearch}
+                disabled={isSearching || !barcode.trim()}
+              >
                 {isSearching ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 ) : (
@@ -135,7 +147,9 @@ export function StockScannerPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/dashboard/products/${scannedProduct.id}`)}
+                  onClick={() =>
+                    navigate(`/dashboard/products/${scannedProduct.id}`)
+                  }
                 >
                   Voir détails
                   <ArrowUpRight className="h-4 w-4 ml-2" />
@@ -158,23 +172,33 @@ export function StockScannerPage() {
                   )}
                   <div>
                     <p className="text-sm text-muted-foreground">SKU</p>
-                    <code className="text-sm bg-muted px-2 py-0.5 rounded">{scannedProduct.sku}</code>
+                    <code className="text-sm bg-muted px-2 py-0.5 rounded">
+                      {scannedProduct.sku}
+                    </code>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Nom</p>
                     <p className="font-medium text-lg">{scannedProduct.nom}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Conditionnement scanné</p>
-                    <p className="font-medium">{scannedConditionnement.uniteConditionnement.nom}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Conditionnement scanné
+                    </p>
+                    <p className="font-medium">
+                      {scannedConditionnement.uniteConditionnement.nom}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Prix: {scannedConditionnement.prixUnitaire.toFixed(2)} €
                     </p>
                   </div>
                   {scannedConditionnement.codeBarre && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Code-barre</p>
-                      <code className="font-mono">{scannedConditionnement.codeBarre}</code>
+                      <p className="text-sm text-muted-foreground">
+                        Code-barre
+                      </p>
+                      <code className="font-mono">
+                        {scannedConditionnement.codeBarre}
+                      </code>
                     </div>
                   )}
                   {scannedProduct.categorie && (
@@ -199,32 +223,46 @@ export function StockScannerPage() {
 
                 {/* Stock Info */}
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Stock actuel</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Stock actuel
+                  </p>
                   {productStock.length === 0 ? (
-                    <p className="text-muted-foreground">Aucun stock enregistré</p>
+                    <p className="text-muted-foreground">
+                      Aucun stock enregistré
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {productStock.map((stockItem) => {
-                        const isScannedUnit = stockItem.uniteConditionnement.id === scannedConditionnement.uniteConditionnement.id;
+                        const isScannedUnit =
+                          stockItem.uniteConditionnement.id ===
+                          scannedConditionnement.uniteConditionnement.id;
                         return (
                           <div
                             key={stockItem.id}
                             className={cn(
-                              'flex items-center justify-between p-3 rounded-lg',
-                              isScannedUnit ? 'bg-primary/10 border border-primary/20' : 'bg-muted/30'
+                              "flex items-center justify-between p-3 rounded-lg",
+                              isScannedUnit
+                                ? "bg-primary/10 border border-primary/20"
+                                : "bg-muted/30",
                             )}
                           >
-                            <span className={cn('text-sm', isScannedUnit && 'font-medium')}>
+                            <span
+                              className={cn(
+                                "text-sm",
+                                isScannedUnit && "font-medium",
+                              )}
+                            >
                               {stockItem.uniteConditionnement.nom}
-                              {isScannedUnit && ' (scanné)'}
+                              {isScannedUnit && " (scanné)"}
                             </span>
                             <div className="text-right">
                               <p
                                 className={cn(
-                                  'font-bold',
-                                  stockItem.quantiteDisponible <= (scannedProduct.seuilStockMinimal || 0)
-                                    ? 'text-destructive'
-                                    : 'text-green-600'
+                                  "font-bold",
+                                  stockItem.quantiteDisponible <=
+                                    (scannedProduct.seuilStockMinimal || 0)
+                                    ? "text-destructive"
+                                    : "text-green-600",
                                 )}
                               >
                                 {stockItem.quantiteDisponible} disponible
@@ -244,10 +282,15 @@ export function StockScannerPage() {
                   {/* Stock Alert */}
                   {scannedProduct.seuilStockMinimal !== undefined && (
                     <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Seuil d'alerte</p>
-                      <p className="font-medium">{scannedProduct.seuilStockMinimal} unités</p>
+                      <p className="text-sm text-muted-foreground">
+                        Seuil d'alerte
+                      </p>
+                      <p className="font-medium">
+                        {scannedProduct.seuilStockMinimal} unités
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Réappro auto: {scannedProduct.reapproAuto ? 'Activé' : 'Désactivé'}
+                        Réappro auto:{" "}
+                        {scannedProduct.reapproAuto ? "Activé" : "Désactivé"}
                       </p>
                     </div>
                   )}
