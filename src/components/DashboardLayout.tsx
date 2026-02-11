@@ -36,13 +36,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Top Navigation Bar */}
         <header className="h-16 border-b border-border bg-card">
           <div className="h-full px-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <CaveoLogo className="h-8 w-8" />
-              <div>
+              <div className="text-left">
                 <h1 className="text-xl font-bold text-primary">Caveo</h1>
                 <p className="text-xs text-muted-foreground">Smart Wine Inventory</p>
               </div>
-            </div>
+            </button>
 
             <div className="flex items-center gap-4">
               {/* Alerts Badge */}
