@@ -1,8 +1,9 @@
 import { useAuthStore } from '@/store/auth.store';
 import { useStockStore } from '@/store/stock.store';
+import { useNotificationStore } from '@/store/notification.store';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, AlertTriangle } from 'lucide-react';
+import { LogOut, User, AlertTriangle, Bell } from 'lucide-react';
 import { CaveoLogo } from '@/components/CaveoLogo';
 import { SideNav } from '@/components/SideNav';
 import { useEffect } from 'react';
@@ -13,13 +14,15 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuthStore();
-  const { alertesCount, startPolling } = useStockStore();
+  const { alertesCount, fetchAlertesCount } = useStockStore();
+  const { unreadCount, startWebSocket, stopWebSocket } = useNotificationStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stopPolling = startPolling();
-    return () => stopPolling();
-  }, [startPolling]);
+    fetchAlertesCount();
+    startWebSocket();
+    return () => stopWebSocket();
+  }, [fetchAlertesCount, startWebSocket, stopWebSocket]);
 
   const handleLogout = async () => {
     await logout();
@@ -48,7 +51,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
 
             <div className="flex items-center gap-4">
-              {/* Alerts Badge */}
+              {/* Notification Bell */}
+              <button
+                onClick={() => navigate('/dashboard/notifications')}
+                className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Stock Alerts Badge */}
               {alertesCount > 0 && (
                 <button
                   onClick={() => navigate('/dashboard/stock')}

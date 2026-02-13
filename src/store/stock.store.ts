@@ -54,7 +54,6 @@ interface StockState {
 
   // Utils
   clearError: () => void;
-  startPolling: () => () => void;
 }
 
 function getToken(): string {
@@ -277,18 +276,5 @@ export const useStockStore = create<StockState>((set, get) => ({
 
   clearError: () => {
     set({ error: null });
-  },
-
-  startPolling: () => {
-    // Fetch immediately
-    get().fetchAlertesCount();
-
-    // Set up polling interval (30 seconds)
-    const interval = setInterval(() => {
-      get().fetchAlertesCount();
-    }, 30000);
-
-    // Return cleanup function
-    return () => clearInterval(interval);
   },
 }));
