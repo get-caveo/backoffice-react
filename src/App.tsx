@@ -9,6 +9,7 @@ import { ProductFormPage } from '@/pages/ProductFormPage';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { POSPage } from '@/pages/POSPage';
 import { SuppliersPage } from '@/pages/SuppliersPage';
+import { CommandesClientPage } from '@/pages/CommandesClientPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
 import {
@@ -147,6 +148,15 @@ function App() {
           element={
             <ProtectedRoute>
               <SuppliersPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Commandes client */}
+        <Route
+          path="/dashboard/commandes-client"
+          element={
+            <ProtectedRoute>
+              <CommandesClientPage />
             </ProtectedRoute>
           }
         />

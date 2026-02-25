@@ -21,6 +21,7 @@ import {
   ShoppingCart,
   PackagePlus,
   ListCheck,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface NavItem {
@@ -110,6 +111,11 @@ export function SideNav() {
       title: 'Fournisseurs',
       href: '/dashboard/suppliers',
       icon: Truck,
+    },
+    {
+      title: 'Commandes client',
+      href: '/dashboard/commandes-client',
+      icon: ShoppingBag,
     },
     {
       title: 'Clients',
