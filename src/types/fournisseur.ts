@@ -32,7 +32,7 @@ export interface CreateFournisseurInput {
   certificationsAutres?: string;
 }
 
-export interface UpdateFournisseurInput extends Partial<CreateFournisseurInput> {}
+export type UpdateFournisseurInput = Partial<CreateFournisseurInput>;
 
 export interface FournisseurProduit {
   id: number;

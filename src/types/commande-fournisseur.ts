@@ -2,8 +2,6 @@
  * Commande Fournisseur types based on the backend API
  */
 
-import type { Fournisseur, Produit, UniteConditionnement } from './product';
-
 // Statuts commande fournisseur
 export type StatutCommandeFournisseur =
   | 'BROUILLON'

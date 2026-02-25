@@ -2,8 +2,6 @@
  * Inventaire-related types based on the backend API
  */
 
-import type { Produit, UniteConditionnement } from './product';
-
 // Statuts inventaire
 export type StatutInventaire = 'BROUILLON' | 'EN_COURS' | 'TERMINE' | 'ANNULE';
 

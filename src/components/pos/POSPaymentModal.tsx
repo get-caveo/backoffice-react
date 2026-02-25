@@ -101,6 +101,7 @@ export function POSPaymentModal({
 
   // Reset TPE status when mode changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTpeStatus('idle');
   }, [selectedMode]);
 

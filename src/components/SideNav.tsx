@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useStockStore } from '@/store/stock.store';
 import {
   Warehouse,
   TrendingUp,
@@ -14,7 +13,6 @@ import {
   CreditCard,
   ChevronDown,
   ChevronRight,
-  AlertTriangle,
   Package,
   ScanBarcode,
   ClipboardList,
@@ -48,7 +46,6 @@ function isNavGroup(entry: NavEntry): entry is NavGroup {
 
 export function SideNav() {
   const location = useLocation();
-  const { alertesCount } = useStockStore();
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['gestion-stock']));
 
   const navEntries: NavEntry[] = [

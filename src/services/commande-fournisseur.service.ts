@@ -8,7 +8,6 @@ import { apiClient } from '@/lib/api-client';
 import type {
   CommandeFournisseur,
   LigneCommandeFournisseur,
-  CreateCommandeFournisseurInput,
   UpdateCommandeFournisseurInput,
   CreateLigneCommandeInput,
   ReceptionCommandeInput,

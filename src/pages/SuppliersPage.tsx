@@ -19,7 +19,6 @@ import {
   Leaf,
   Award,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { Fournisseur, CreateFournisseurInput } from '@/types/fournisseur';
 
 export function SuppliersPage() {
